@@ -1,8 +1,13 @@
+'''
+Functions used by multiple jupyter notebooks in the wavelight directory
+'''
+
+import datetime
 import requests
 from bs4 import BeautifulSoup
 import pandas as pd
-import plotly.express as px
-import datetime
+# import plotly.express as px
+
 
 
 def get_tables(data):
@@ -50,10 +55,10 @@ def create_world_records_df(df_list):
     df_men['gender'] = 'M'
 
     # Select running events we want to keep
-    df_men = df_men.iloc[~df_men.index.isin([x for x in range(20,42)]),:]
-    df_men_indoor = df_men_indoor.iloc[df_men_indoor.index.isin([x for x in range(0,12)]), :]
-    df_women = df_women.iloc[~df_women.index.isin([x for x in range(27,50)]),:]
-    df_women_indoor = df_women_indoor.iloc[df_women_indoor.index.isin([x for x in range(0,10)]),:]
+    df_men = df_men.iloc[~df_men.index.isin(list(range(20,42))),:]
+    df_men_indoor = df_men_indoor.iloc[df_men_indoor.index.isin(list(range(0,12))), :]
+    df_women = df_women.iloc[~df_women.index.isin(list(range(27,50))),:]
+    df_women_indoor = df_women_indoor.iloc[df_women_indoor.index.isin(list(range(0,10))),:]
 
     # Combine wikipedia records
     df = pd.concat([df_men, df_women, df_men_indoor, df_women_indoor])
@@ -88,7 +93,7 @@ def create_wavelight_records_df(data):
     '''
     Take the wavelight data and put it into a dataframe with the same format as
     the world records dataframe.
-    
+
     Parameters: data - the results of the requests.get call on the wavelight url.
     Returns: df_wave - dataframe containing wavelight data.
     '''
@@ -97,7 +102,7 @@ def create_wavelight_records_df(data):
     df_wave = pd.read_html(str(wave_table))[0]
     df_wave['year'] = df_wave['Meeting'].apply(lambda x: x.split(' (')[1].replace(')',''))
     df_wave['Meeting'] = df_wave['Meeting'].apply(lambda x: x.split(' (')[0])
-    
+
     # Column name changes
     mapper = {'The Track at Boston': 'The Track at Boston',
               'International Meeting de Lievin': 'Meeting Hauts-de-France Pas-de-Calais',
@@ -113,20 +118,20 @@ def create_wavelight_records_df(data):
     # Individual adjustments
     df_wave.iloc[1,0] = 'Jakob Ingebrigtsen'
 
-    return(df_wave)
+    return df_wave
 
 
 def wavelight_url_to_df():
     '''
     Place the track world records for men and women, indoor and outdoor listed at
     "https://wavelight.live/past-events/" in a dataframe
-    
+
     Returns: a dataframe and the status code from gettin the url.
     '''
 
     wave_url = 'https://wavelight.live/past-events/'
     wave_data = requests.get(wave_url)
-    
+
     wave_records_df = create_wavelight_records_df(wave_data)
 
     return (wave_records_df, wave_data.status_code)
@@ -135,12 +140,12 @@ def wavelight_url_to_df():
 def combine_dfs(df_wave, df_records):
     '''
     Combine the wavelight dataframe with the world records dataframe
-    
+
     Parameters: df_wave - dataframe containing wavelight info
                 df_records - dataframe containing world record info
     Returns: comb_df - dataframe containing the combined info
     '''
-    
+
     df_wave.year = df_wave.year.astype('int64')
     df_comb = df_records.merge(df_wave,
                                how='left',
@@ -153,7 +158,10 @@ def combine_dfs(df_wave, df_records):
                                                  'Meeting': 'FBK Games',
                                                  'year':2021,
                                                  'Date':datetime.date(year=2021, month=6, day=6),
-                                                 'wavelight':'y', 'gender': 'W', 'Perf.': '29:06.82'},
+                                                 'wavelight':'y',
+                                                 'gender': 'W',
+                                                 'Perf.':
+                                                 '29:06.82'},
                                                  index=[0])],
                                                  ignore_index=True)
     return df_comb
@@ -162,7 +170,7 @@ def combine_dfs(df_wave, df_records):
 def check_status(status, location):
     '''
     Prints and error message if the status is not 200
-    
+
     Parameters: status - int value or variable containing status code
                 location - string description of where status code came from
     '''
